@@ -10,7 +10,7 @@
 <div class="results"><div class="resultHead"><div><h2>Найденные тендеры</h2><p><span id="found">5</span> закупок соответствуют критериям</p></div><button class="export" onclick="download()">Выгрузить в Excel</button></div><div class="table"><table><thead><tr><th>Тендер / заказчик</th><th>Регион</th><th>НМЦК</th><th>Дедлайн</th><th>Рейтинг</th></tr></thead><tbody id="body"></tbody></table><div id="empty" class="empty" hidden>По заданным фильтрам тендеров нет.</div></div></div></section>
 <div id="modal" class="modal" onclick="closeModal()"><div class="drawer" onclick="event.stopPropagation()"><button class="close" onclick="closeModal()">×</button><small style="color:var(--o);font-weight:800">КАРТОЧКА ТЕНДЕРА</small><h2 id="mt"></h2><div class="customer"><b id="mc"></b><div id="mi" class="sub"></div></div><div class="grid"><div><span>НМЦК</span><b id="mp"></b></div><div><span>Дедлайн</span><b id="md"></b></div><div><span>Источник</span><b id="ms"></b></div><div><span>Рейтинг</span><b id="mr"></b></div></div><div class="why"><b>Почему подходит КИТ</b><p id="mw"></p></div></div></div>
 <script>
-const data=[
+let data=[
 ["Перевозка сборных грузов","АО «ПромТехСнаб»","6671429081","Уральский ФО",18600000,"18.08.2026",92,"ЕИС","Регулярные межтерминальные перевозки, 14 регионов"],
 ["Транспортно-экспедиционные услуги по РФ","ООО «Северные системы»","7804691220","Северо-Западный ФО",12400000,"19.08.2026",87,"Росэлторг","Филиальная сеть и подходящая география КИТ"],
 ["Доставка продукции до региональных складов","АО «Вектор-М»","7731645802","Центральный ФО",27800000,"21.08.2026",84,"B2B-Center","Высокий оборот и повторяющиеся маршруты"],
