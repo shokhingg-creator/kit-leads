@@ -1,0 +1,24 @@
+{
+  "manifest_version": 3,
+  "name": "КИТ — Тендерный радар",
+  "version": "1.0.0",
+  "description": "Собирает подходящие транспортные тендеры из авторизованных страниц площадок.",
+  "permissions": ["storage", "tabs", "scripting", "alarms"],
+  "host_permissions": [
+    "https://zakupki.gov.ru/*",
+    "https://www.roseltorg.ru/*",
+    "https://roseltorg.ru/*",
+    "https://www.b2b-center.ru/*",
+    "https://b2b-center.ru/*",
+    "https://www.fabrikant.ru/*",
+    "https://fabrikant.ru/*",
+    "https://shokhingg-creator.github.io/*"
+  ],
+  "action": {"default_popup": "popup.html", "default_title": "КИТ — Тендерный радар"},
+  "background": {"service_worker": "background.js"},
+  "content_scripts": [{
+    "matches": ["https://shokhingg-creator.github.io/kit-leads/tender-finder/*"],
+    "js": ["bridge.js"],
+    "run_at": "document_idle"
+  }]
+}
