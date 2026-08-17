@@ -20,14 +20,15 @@ chrome.runtime.onInstalled.addListener(()=>chrome.alarms.create("kit-auto-collec
 chrome.alarms.onAlarm.addListener(a=>{if(a.name==="kit-auto-collect")collectAll()});
 chrome.runtime.onMessage.addListener((m,s,r)=>{
  if(m.type==="COLLECT_ALL"){collectAll().then(r);return true}
- if(m.type==="COLLECT_TAB"){collectTab(m.tabId).then(r);return true}\n if(m.type==="OPEN_ALL"){openAll().then(r);return true}
+ if(m.type==="COLLECT_TAB"){collectTab(m.tabId).then(r);return true}
+ if(m.type==="OPEN_ALL"){openAll().then(r);return true}
  if(m.type==="GET_STATE"){chrome.storage.local.get(["kitTenders","lastRun","lastStatus"]).then(r);return true}
  if(m.type==="CLEAR"){chrome.storage.local.set({kitTenders:[],lastStatus:"База очищена"}).then(()=>r({ok:true}));return true}
 });
 async function collectTab(tabId){
  try{
   const tab=await chrome.tabs.get(tabId);
-  if(!/(zakupki\.gov\.ru|roseltorg\.ru|b2b-center\.ru|fabrikant\.ru)/i.test(tab.url||""))return{ok:false,error:"Откройте страницу со списком закупок поддерживаемой площадки"};
+  if(!/(zakupki\.gov\.ru|roseltorg\.ru|b2b-center\.ru|fabrikant\.ru|tektorg\.ru|rts-tender\.ru|sberbank-ast\.ru|etpgpb\.ru|zakazrf\.ru|etp-ets\.ru|lot-online\.ru|otc\.ru|bidzaar\.com|etprf\.ru|ati\.su)/i.test(tab.url||""))return{ok:false,error:"Откройте страницу со списком закупок поддерживаемой площадки"};
   await chrome.scripting.executeScript({target:{tabId},files:["extractor.js","publication-date.js"]});
   const injected=await chrome.scripting.executeScript({target:{tabId},func:()=>{const raw=document.documentElement.dataset.kitTenderResult;return raw?JSON.parse(raw):null}});
   const result=injected&&injected[0]&&injected[0].result;
@@ -81,7 +82,12 @@ async function merge(items){
  await chrome.storage.local.set({kitTenders:[...map.values()].slice(-3000),lastRun:new Date().toISOString()});
 }
 function wait(tabId,settleMs=2500){return new Promise(resolve=>{const timer=setTimeout(()=>{chrome.tabs.onUpdated.removeListener(fn);resolve()},30000);const fn=(id,info)=>{if(id===tabId&&info.status==="complete"){clearTimeout(timer);chrome.tabs.onUpdated.removeListener(fn);setTimeout(resolve,settleMs)}};chrome.tabs.onUpdated.addListener(fn)})}
-async function openAll(){\n const opened=[];\n for(const src of SOURCES){try{const tab=await chrome.tabs.create({url:src.url,active:false});opened.push({source:src.name,tabId:tab.id})}catch(e){}}\n return{ok:true,count:opened.length}\n}\nasync function collectAll(){
+async function openAll(){
+ const opened=[];
+ for(const src of SOURCES){try{const tab=await chrome.tabs.create({url:src.url,active:false});opened.push({source:src.name,tabId:tab.id})}catch(e){}}
+ return{ok:true,count:opened.length}
+}
+async function collectAll(){
  const summary=[];await chrome.storage.local.set({lastStatus:"Сбор запущен"});
  for(const src of SOURCES){let tab;try{tab=await chrome.tabs.create({url:src.url,active:false});await wait(tab.id,src.waitMs||2500);summary.push({source:src.name,...await collectTab(tab.id)})}catch(e){summary.push({source:src.name,ok:false,error:e&&e.message?e.message:String(e)})}finally{if(tab&&tab.id)chrome.tabs.remove(tab.id).catch(()=>{})}}
  const total=summary.reduce((n,x)=>n+(x.count||0),0);await chrome.storage.local.set({lastStatus:"Сбор завершён: "+total+" тендеров"});return{ok:true,summary}
