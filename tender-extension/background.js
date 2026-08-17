@@ -13,8 +13,7 @@ const SOURCES=[
 {name:"Российский аукционный дом",url:"https://lot-online.ru/"},
 {name:"OTC",url:"https://otc.ru/tender/"},
 {name:"Bidzaar",url:"https://bidzaar.com/aggregator",waitMs:8000},
-{name:"ЭТПРФ",url:"https://etprf.ru/"},
-{name:"АТИ",url:"https://ati.su/tenders"}];
+{name:"ЭТПРФ",url:"https://etprf.ru/"}];
 if(Array.isArray(globalThis.KIT_EXTRA_SOURCES)) SOURCES.push(...globalThis.KIT_EXTRA_SOURCES);
 chrome.runtime.onInstalled.addListener(()=>chrome.alarms.create("kit-auto-collect",{periodInMinutes:30}));
 chrome.alarms.onAlarm.addListener(a=>{if(a.name==="kit-auto-collect")collectAll()});
@@ -28,7 +27,7 @@ chrome.runtime.onMessage.addListener((m,s,r)=>{
 async function collectTab(tabId){
  try{
   const tab=await chrome.tabs.get(tabId);
-  if(!/(zakupki\.gov\.ru|roseltorg\.ru|b2b-center\.ru|fabrikant\.ru|tektorg\.ru|rts-tender\.ru|sberbank-ast\.ru|etpgpb\.ru|zakazrf\.ru|etp-ets\.ru|lot-online\.ru|otc\.ru|bidzaar\.com|etprf\.ru|ati\.su)/i.test(tab.url||""))return{ok:false,error:"Откройте страницу со списком закупок поддерживаемой площадки"};
+  if(!/(zakupki\.gov\.ru|roseltorg\.ru|b2b-center\.ru|fabrikant\.ru|tektorg\.ru|rts-tender\.ru|sberbank-ast\.ru|etpgpb\.ru|zakazrf\.ru|etp-ets\.ru|lot-online\.ru|otc\.ru|bidzaar\.com|etprf\.ru)/i.test(tab.url||""))return{ok:false,error:"Откройте страницу со списком закупок поддерживаемой площадки"};
   await chrome.scripting.executeScript({target:{tabId},files:["extractor.js","publication-date.js"]});
   const injected=await chrome.scripting.executeScript({target:{tabId},func:()=>{const raw=document.documentElement.dataset.kitTenderResult;return raw?JSON.parse(raw):null}});
   const result=injected&&injected[0]&&injected[0].result;
