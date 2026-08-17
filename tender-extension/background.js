@@ -91,38 +91,15 @@ async function openAll(){
 }
 async function setBidzaarQuery(tabId,query){
  try{
-  const run=await chrome.scripting.executeScript({target:{tabId},args:[query],func:(value)=>{
-   const input=[...document.querySelectorAll("input")].find(x=>(x.placeholder||"").toLowerCase().includes("найти"));
-   if(!input)return false;
-   input.focus();
-   const setter=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,"value")?.set;
-   if(setter)setter.call(input,value);else input.value=value;
-   input.dispatchEvent(new Event("input",{bubbles:true}));
-   input.dispatchEvent(new Event("change",{bubbles:true}));
-   input.dispatchEvent(new KeyboardEvent("keydown",{key:"Enter",code:"Enter",keyCode:13,which:13,bubbles:true}));
-   input.dispatchEvent(new KeyboardEvent("keyup",{key:"Enter",code:"Enter",keyCode:13,which:13,bubbles:true}));
-   const frame=input.parentElement||input;
-   const rect=frame.getBoundingClientRect();
-   let target=document.elementFromPoint(rect.right-24,rect.top+rect.height/2);
-   let clicked=false;
-   for(let i=0;target&&i<5;i++,target=target.parentElement){
-    if(target!==input){
-     target.dispatchEvent(new MouseEvent("mousedown",{bubbles:true,clientX:rect.right-24,clientY:rect.top+rect.height/2}));
-     target.dispatchEvent(new MouseEvent("mouseup",{bubbles:true,clientX:rect.right-24,clientY:rect.top+rect.height/2}));
-     target.dispatchEvent(new MouseEvent("click",{bubbles:true,clientX:rect.right-24,clientY:rect.top+rect.height/2}));
-     clicked=true;
-    }
-    if(target===frame)break
-   }
-   if(!clicked){
-    const icon=frame.querySelector("svg");
-    const control=icon&&(icon.closest("button,[role=button],a")||icon.parentElement);
-    if(control)control.click()
-   }
-   input.blur();
-   return true;
-  }});
-  return !!(run&&run[0]&&run[0].result)
+  const url=new URL("https://bidzaar.com/app/requests/external");
+  url.searchParams.set("sorting.key","acceptanceStartDate");
+  url.searchParams.set("sorting.direction","desc");
+  url.searchParams.set("search",query);
+  url.searchParams.set("logic","and");
+  url.searchParams.set("filters","[]");
+  await chrome.tabs.update(tabId,{url:url.toString()});
+  await wait(tabId,2500);
+  return true
  }catch{return false}
 }
 const delay=ms=>new Promise(resolve=>setTimeout(resolve,ms));
