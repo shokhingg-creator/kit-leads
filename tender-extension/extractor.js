@@ -25,13 +25,15 @@
   const text=clean(box&&box.innerText);
   const transportation=/(^|\s)Перевозки(\s|$)/i.test(text)||good.test(text);
   if(!transportation||bad.test(text))return;
-  const href=new URL(a.href,location.href).href;
-  if(seen.has(href))return;seen.add(href);
   const lines=(box.innerText||"").split(/\n+/).map(clean).filter(Boolean);
   const title=lines.find(x=>good.test(x)&&!/^Перевозки$/i.test(x))||lines.find(x=>x.length>25&&!/Запрос предложений|РЕКОМЕНДОВАНО/i.test(x))||clean(a.textContent);
   const links=[...box.querySelectorAll("a[href]")];
-  const org=links.find(x=>x!==a&&/(ООО|АО|ПАО|ИП|ЗАО|ОАО|ФГУП)/i.test(clean(x.textContent)));
+  const tenderLink=links.find(x=>good.test(clean(x.textContent)))||a;
+  const href=new URL(tenderLink.href,location.href).href;
   const dm=text.match(dateRe),pm=text.match(priceRe),im=text.match(innRe);
+  const signature=source+"|"+title.toLowerCase().replace(/[^а-яёa-z0-9]+/gi," ").trim()+"|"+(pm?pm[1].replace(/\s|\u00a0/g,""):"")+"|"+(dm?dm[1]:"");
+  if(seen.has(signature))return;seen.add(signature);
+  const org=links.find(x=>x!==tenderLink&&/(ООО|АО|ПАО|ИП|ЗАО|ОАО|ФГУП)/i.test(clean(x.textContent)));
   items.push({id:source+"-"+btoa(unescape(encodeURIComponent(href))).slice(-24),title,customer:clean(org&&org.textContent),inn:im?im[1]:"",region:"Не указан",price:pm?Number(pm[1].replace(/\s|\u00a0/g,"")):0,deadline:dm?dm[1]+(dm[2]?" "+dm[2]:""):"",score:/(^|\s)Перевозки(\s|$)/i.test(text)?85:70,source,url:href,collectedAt:new Date().toISOString()});
  }
  if(source==="B2B-Center"){
