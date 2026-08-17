@@ -101,8 +101,25 @@ async function setBidzaarQuery(tabId,query){
    input.dispatchEvent(new Event("change",{bubbles:true}));
    input.dispatchEvent(new KeyboardEvent("keydown",{key:"Enter",code:"Enter",keyCode:13,which:13,bubbles:true}));
    input.dispatchEvent(new KeyboardEvent("keyup",{key:"Enter",code:"Enter",keyCode:13,which:13,bubbles:true}));
-   const button=input.parentElement&&input.parentElement.querySelector("button,[role=button]");
-   if(button)button.click();
+   const frame=input.parentElement||input;
+   const rect=frame.getBoundingClientRect();
+   let target=document.elementFromPoint(rect.right-24,rect.top+rect.height/2);
+   let clicked=false;
+   for(let i=0;target&&i<5;i++,target=target.parentElement){
+    if(target!==input){
+     target.dispatchEvent(new MouseEvent("mousedown",{bubbles:true,clientX:rect.right-24,clientY:rect.top+rect.height/2}));
+     target.dispatchEvent(new MouseEvent("mouseup",{bubbles:true,clientX:rect.right-24,clientY:rect.top+rect.height/2}));
+     target.dispatchEvent(new MouseEvent("click",{bubbles:true,clientX:rect.right-24,clientY:rect.top+rect.height/2}));
+     clicked=true;
+    }
+    if(target===frame)break
+   }
+   if(!clicked){
+    const icon=frame.querySelector("svg");
+    const control=icon&&(icon.closest("button,[role=button],a")||icon.parentElement);
+    if(control)control.click()
+   }
+   input.blur();
    return true;
   }});
   return !!(run&&run[0]&&run[0].result)
