@@ -37,29 +37,31 @@ async function collectTab(tabId){
  }catch(e){return{ok:false,error:e&&e.message?e.message:String(e)}}
 }
 function tenderKey(x){
- const source=(x.source||"").toLowerCase();
  const rawUrl=x.url||"";
+ const combined=((x.title||"")+" "+rawUrl);
+ const notice=combined.match(/(?:№|номер|извещени[ея]|закупк[аи]|purchase|procedure|tender|trade)[^\\d]{0,20}(\\d{6,})/i);
+ if(notice)return "notice|"+notice[1];
  try{
   const u=new URL(rawUrl);
-  const idNames=["id","tender_id","procedure_id","trade_id","noticeInfoId","regNumber","purchaseNumber"];
-  for(const name of idNames){const value=u.searchParams.get(name);if(value)return source+"|id|"+value.toLowerCase()}
-  const pathId=u.pathname.match(/(?:^|\/)(\d{6,})(?:\/|$)/);
-  if(pathId)return source+"|id|"+pathId[1];
-  u.hash="";
-  [...u.searchParams.keys()].forEach(k=>{if(/^utm_|^(searching|date|trade|company_type|price_currency|f_keyword)$/i.test(k))u.searchParams.delete(k)});
-  const canonical=u.origin+u.pathname+(u.searchParams.toString()?"?"+u.searchParams.toString():"");
-  if(canonical!==u.origin+"/")return source+"|url|"+canonical.toLowerCase()
+  const idNames=["noticeInfoId","regNumber","purchaseNumber"];
+  for(const name of idNames){const value=u.searchParams.get(name);if(value)return "notice|"+value.toLowerCase()}
+  const localIdNames=["id","tender_id","procedure_id","trade_id"];
+  for(const name of localIdNames){const value=u.searchParams.get(name);if(value)return (x.source||"").toLowerCase()+"|id|"+value.toLowerCase()}
+  const pathId=u.pathname.match(/(?:^|\\/)(\\d{6,})(?:\\/|$)/);
+  if(pathId)return (x.source||"").toLowerCase()+"|id|"+pathId[1]
  }catch{}
- const number=((x.title||"")+" "+rawUrl).match(/(?:№|номер|procedure|tender|trade)[^\d]{0,12}(\d{6,})/i);
- if(number)return source+"|number|"+number[1];
- const title=(x.title||"").toLowerCase().replace(/[^а-яёa-z0-9]+/gi," ").trim().slice(0,180);
- const customer=(x.inn||x.customer||"").toLowerCase().replace(/\s+/g," ").trim();
- return source+"|text|"+title+"|"+customer
+ const title=(x.title||"").toLowerCase()
+  .replace(/(?:лот|процедура)\\s*№?\\s*\\d+/gi," ")
+  .replace(/[^а-яёa-z0-9]+/gi," ").replace(/\\s+/g," ").trim().slice(0,220);
+ const price=Number(x.price||0);
+ const deadline=String(x.deadline||"").replace(/\\D/g,"").slice(0,8);
+ const customer=(x.inn||x.customer||"").toLowerCase().replace(/[^а-яёa-z0-9]+/gi," ").trim();
+ return "text|"+title+"|"+(price||"")+"|"+deadline+"|"+(customer||"")
 }
 function combineTender(old,x){
  const oldStatus=old.workStatus&&old.workStatus!=="new"?old.workStatus:"";
  const firstSeenAt=old.firstSeenAt||old.foundAt||x.firstSeenAt||new Date().toISOString();
- return {...old,...x,workStatus:oldStatus||x.workStatus||old.workStatus||"new",decisionDate:old.decisionDate||x.decisionDate||"",publicationDate:x.publicationDate||old.publicationDate||"",firstSeenAt,lastSeenAt:old.lastSeenAt||firstSeenAt,history:Array.isArray(old.history)?old.history:(Array.isArray(x.history)?x.history:[])}
+ const sources=[...new Set([...(old.sources||[old.source]).filter(Boolean),...(x.sources||[x.source]).filter(Boolean)])];\n return {...old,...x,sources,workStatus:oldStatus||x.workStatus||old.workStatus||"new",decisionDate:old.decisionDate||x.decisionDate||"",publicationDate:x.publicationDate||old.publicationDate||"",firstSeenAt,lastSeenAt:old.lastSeenAt||firstSeenAt,history:Array.isArray(old.history)?old.history:(Array.isArray(x.history)?x.history:[])}
 }
 function newlyFound(x,at){
  const history=Array.isArray(x.history)?x.history.slice():[];
