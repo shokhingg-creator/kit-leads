@@ -47,13 +47,26 @@ function tenderKey(x){
 }
 function combineTender(old,x){
  const oldStatus=old.workStatus&&old.workStatus!=="new"?old.workStatus:"";
- return {...old,...x,workStatus:oldStatus||x.workStatus||old.workStatus||"new",decisionDate:old.decisionDate||x.decisionDate||"",publicationDate:x.publicationDate||old.publicationDate||""}
+ const firstSeenAt=old.firstSeenAt||old.foundAt||x.firstSeenAt||new Date().toISOString();
+ return {...old,...x,workStatus:oldStatus||x.workStatus||old.workStatus||"new",decisionDate:old.decisionDate||x.decisionDate||"",publicationDate:x.publicationDate||old.publicationDate||"",firstSeenAt,lastSeenAt:old.lastSeenAt||firstSeenAt,history:Array.isArray(old.history)?old.history:(Array.isArray(x.history)?x.history:[])}
+}
+function newlyFound(x,at){
+ const history=Array.isArray(x.history)?x.history.slice():[];
+ if(!history.length)history.push({at,type:"found",details:"Впервые найден на площадке "+(x.source||"")});
+ return {...x,firstSeenAt:x.firstSeenAt||at,lastSeenAt:at,history}
+}
+function seenAgain(old,x,at){
+ const merged=combineTender(old,x),history=[...(merged.history||[])];
+ const previous=merged.lastSeenAt?new Date(merged.lastSeenAt).getTime():0;
+ if(!previous||Date.now()-previous>5*60*1000)history.push({at,type:"seen",details:"Повторно найден при автоматическом поиске"});
+ return {...merged,lastSeenAt:at,history}
 }
 async function merge(items){
  const s=await chrome.storage.local.get(["kitTenders"]);
  const map=new Map();
- for(const x of (s.kitTenders||[])){const key=tenderKey(x);map.set(key,map.has(key)?combineTender(map.get(key),x):x)}
- for(const x of items){const key=tenderKey(x);map.set(key,map.has(key)?combineTender(map.get(key),x):x)}
+ const at=new Date().toISOString();
+ for(const x of (s.kitTenders||[])){const key=tenderKey(x),prepared=newlyFound(x,x.firstSeenAt||x.foundAt||at);map.set(key,map.has(key)?combineTender(map.get(key),prepared):prepared)}
+ for(const x of items){const key=tenderKey(x);map.set(key,map.has(key)?seenAgain(map.get(key),x,at):newlyFound(x,at))}
  await chrome.storage.local.set({kitTenders:[...map.values()].slice(-3000),lastRun:new Date().toISOString()});
 }
 function wait(tabId){return new Promise(resolve=>{const timer=setTimeout(()=>{chrome.tabs.onUpdated.removeListener(fn);resolve()},25000);const fn=(id,info)=>{if(id===tabId&&info.status==="complete"){clearTimeout(timer);chrome.tabs.onUpdated.removeListener(fn);setTimeout(resolve,2500)}};chrome.tabs.onUpdated.addListener(fn)})}
