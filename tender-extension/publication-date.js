@@ -19,7 +19,7 @@
    for(let i=0;i<8&&box.parentElement;i++){
     box=box.parentElement;
     const t=clean(box.innerText);
-    if(t.length>120&&(/Опубликовано|Актуально до/i.test(t)||source!=="B2B-Center"))break;
+    if(t.length>120&&(/Опубликовано|Актуально до/i.test(t)||result.source!=="B2B-Center"))break;
    }
   }
   const text=clean(box&&box.innerText);
