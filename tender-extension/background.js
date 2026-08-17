@@ -12,7 +12,7 @@ const SOURCES=[
 {name:"НЭП",url:"https://www.etp-ets.ru/procedures/"},
 {name:"Российский аукционный дом",url:"https://lot-online.ru/"},
 {name:"OTC",url:"https://otc.ru/tender/"},
-{name:"Bidzaar",url:"https://bidzaar.com/aggregator",waitMs:8000},
+{name:"Bidzaar",url:"https://bidzaar.com/app/requests/external",waitMs:8000},
 {name:"ЭТПРФ",url:"https://etprf.ru/"}];
 if(Array.isArray(globalThis.KIT_EXTRA_SOURCES)) SOURCES.push(...globalThis.KIT_EXTRA_SOURCES);
 chrome.runtime.onInstalled.addListener(()=>chrome.alarms.create("kit-auto-collect",{periodInMinutes:30}));
