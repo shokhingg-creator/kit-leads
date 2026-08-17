@@ -12,7 +12,7 @@ const SOURCES=[
 {name:"НЭП",url:"https://www.etp-ets.ru/procedures/"},
 {name:"Российский аукционный дом",url:"https://lot-online.ru/"},
 {name:"OTC",url:"https://otc.ru/tender/"},
-{name:"Bidzaar",url:"https://bidzaar.com/marketplace"},
+{name:"Bidzaar",url:"https://bidzaar.com/aggregator",waitMs:8000},
 {name:"ЭТПРФ",url:"https://etprf.ru/"},
 {name:"АТИ",url:"https://ati.su/tenders"}];
 if(Array.isArray(globalThis.KIT_EXTRA_SOURCES)) SOURCES.push(...globalThis.KIT_EXTRA_SOURCES);
@@ -80,9 +80,9 @@ async function merge(items){
  for(const x of items){const key=tenderKey(x);map.set(key,map.has(key)?seenAgain(map.get(key),x,at):newlyFound(x,at))}
  await chrome.storage.local.set({kitTenders:[...map.values()].slice(-3000),lastRun:new Date().toISOString()});
 }
-function wait(tabId){return new Promise(resolve=>{const timer=setTimeout(()=>{chrome.tabs.onUpdated.removeListener(fn);resolve()},25000);const fn=(id,info)=>{if(id===tabId&&info.status==="complete"){clearTimeout(timer);chrome.tabs.onUpdated.removeListener(fn);setTimeout(resolve,2500)}};chrome.tabs.onUpdated.addListener(fn)})}
+function wait(tabId,settleMs=2500){return new Promise(resolve=>{const timer=setTimeout(()=>{chrome.tabs.onUpdated.removeListener(fn);resolve()},30000);const fn=(id,info)=>{if(id===tabId&&info.status==="complete"){clearTimeout(timer);chrome.tabs.onUpdated.removeListener(fn);setTimeout(resolve,settleMs)}};chrome.tabs.onUpdated.addListener(fn)})}
 async function collectAll(){
  const summary=[];await chrome.storage.local.set({lastStatus:"Сбор запущен"});
- for(const src of SOURCES){let tab;try{tab=await chrome.tabs.create({url:src.url,active:false});await wait(tab.id);summary.push({source:src.name,...await collectTab(tab.id)})}catch(e){summary.push({source:src.name,ok:false,error:e&&e.message?e.message:String(e)})}finally{if(tab&&tab.id)chrome.tabs.remove(tab.id).catch(()=>{})}}
+ for(const src of SOURCES){let tab;try{tab=await chrome.tabs.create({url:src.url,active:false});await wait(tab.id,src.waitMs||2500);summary.push({source:src.name,...await collectTab(tab.id)})}catch(e){summary.push({source:src.name,ok:false,error:e&&e.message?e.message:String(e)})}finally{if(tab&&tab.id)chrome.tabs.remove(tab.id).catch(()=>{})}}
  const total=summary.reduce((n,x)=>n+(x.count||0),0);await chrome.storage.local.set({lastStatus:"Сбор завершён: "+total+" тендеров"});return{ok:true,summary}
 }
