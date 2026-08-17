@@ -27,5 +27,7 @@
  }else{
   for(const a of document.querySelectorAll("a[href]")){let box=a;for(let i=0;i<5&&box.parentElement;i++){box=box.parentElement;if(clean(box.innerText).length>150)break}add(a,box);if(items.length>=200)break}
  }
- return {source,url:location.href,items};
+ const result={source,url:location.href,items};
+ document.documentElement.dataset.kitTenderResult=JSON.stringify(result);
+ return result;
 })()
