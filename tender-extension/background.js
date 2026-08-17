@@ -3,7 +3,18 @@ const SOURCES=[
 {name:"ЕИС",url:"https://zakupki.gov.ru/epz/order/extendedsearch/results.html"},
 {name:"Росэлторг",url:"https://www.roseltorg.ru/procedures/search"},
 {name:"B2B-Center",url:"https://www.b2b-center.ru/market/?f_keyword=%D0%B4%D0%BE%D1%81%D1%82%D0%B0%D0%B2%D0%BA%D0%B0&searching=1&company_type=2&price_currency=0&date=1&trade=all#search-result"},
-{name:"Фабрикант",url:"https://www.fabrikant.ru/trades/procedure/search/"}];
+{name:"Фабрикант",url:"https://www.fabrikant.ru/trades/procedure/search/"},
+{name:"ТЭК-Торг",url:"https://www.tektorg.ru/procedures"},
+{name:"РТС-тендер",url:"https://www.rts-tender.ru/poisk"},
+{name:"Сбер А",url:"https://www.sberbank-ast.ru/purchaseList.aspx"},
+{name:"ЭТП Газпромбанка",url:"https://etpgpb.ru/procedures/"},
+{name:"Заказ РФ",url:"https://etp.zakazrf.ru/"},
+{name:"НЭП",url:"https://www.etp-ets.ru/procedures/"},
+{name:"Российский аукционный дом",url:"https://lot-online.ru/"},
+{name:"OTC",url:"https://otc.ru/tender/"},
+{name:"Bidzaar",url:"https://bidzaar.com/marketplace"},
+{name:"ЭТПРФ",url:"https://etprf.ru/"},
+{name:"АТИ",url:"https://ati.su/tenders"}];
 if(Array.isArray(globalThis.KIT_EXTRA_SOURCES)) SOURCES.push(...globalThis.KIT_EXTRA_SOURCES);
 chrome.runtime.onInstalled.addListener(()=>chrome.alarms.create("kit-auto-collect",{periodInMinutes:30}));
 chrome.alarms.onAlarm.addListener(a=>{if(a.name==="kit-auto-collect")collectAll()});
