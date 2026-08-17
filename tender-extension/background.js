@@ -15,6 +15,7 @@ const SOURCES=[
 {name:"Bidzaar",url:"https://bidzaar.com/app/requests/external",waitMs:8000},
 {name:"ЭТПРФ",url:"https://etprf.ru/"}];
 if(Array.isArray(globalThis.KIT_EXTRA_SOURCES)) SOURCES.push(...globalThis.KIT_EXTRA_SOURCES);
+const BIDZAAR_QUERIES=["грузоперевозки","перевозка грузов","транспортные услуги","транспортно экспедиционные услуги","логистика","сборные грузы","FTL","LTL","складские услуги","ответственное хранение","фулфилмент","курьерская доставка","контейнерные перевозки","железнодорожные перевозки","авиаперевозки"];
 chrome.runtime.onInstalled.addListener(()=>chrome.alarms.create("kit-auto-collect",{periodInMinutes:30}));
 chrome.alarms.onAlarm.addListener(a=>{if(a.name==="kit-auto-collect")collectAll()});
 chrome.runtime.onMessage.addListener((m,s,r)=>{
@@ -88,8 +89,49 @@ async function openAll(){
  for(const src of SOURCES){try{const tab=await chrome.tabs.create({url:src.url,active:false});opened.push({source:src.name,tabId:tab.id})}catch(e){}}
  return{ok:true,count:opened.length}
 }
+async function setBidzaarQuery(tabId,query){
+ try{
+  const run=await chrome.scripting.executeScript({target:{tabId},args:[query],func:(value)=>{
+   const input=[...document.querySelectorAll("input")].find(x=>(x.placeholder||"").toLowerCase().includes("найти"));
+   if(!input)return false;
+   input.focus();
+   const setter=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,"value")?.set;
+   if(setter)setter.call(input,value);else input.value=value;
+   input.dispatchEvent(new Event("input",{bubbles:true}));
+   input.dispatchEvent(new Event("change",{bubbles:true}));
+   input.dispatchEvent(new KeyboardEvent("keydown",{key:"Enter",code:"Enter",keyCode:13,which:13,bubbles:true}));
+   input.dispatchEvent(new KeyboardEvent("keyup",{key:"Enter",code:"Enter",keyCode:13,which:13,bubbles:true}));
+   const button=input.parentElement&&input.parentElement.querySelector("button,[role=button]");
+   if(button)button.click();
+   return true;
+  }});
+  return !!(run&&run[0]&&run[0].result)
+ }catch{return false}
+}
+const delay=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+async function collectBidzaar(tabId){
+ let total=0,successful=0;
+ for(const query of BIDZAAR_QUERIES){
+  if(!await setBidzaarQuery(tabId,query))continue;
+  await delay(3500);
+  const result=await collectTab(tabId);
+  if(result.ok){total+=result.count||0;successful++}
+ }
+ return successful?{ok:true,count:total,source:"Bidzaar"}:{ok:false,count:0,source:"Bidzaar",error:"Не удалось выполнить поиск. Проверьте вход в Bidzaar и наличие поля «Найти»"}
+}
 async function collectAll(){
  const summary=[];await chrome.storage.local.set({lastStatus:"Сбор запущен"});
- for(const src of SOURCES){let tab;try{tab=await chrome.tabs.create({url:src.url,active:false});await wait(tab.id,src.waitMs||2500);summary.push({source:src.name,...await collectTab(tab.id)})}catch(e){summary.push({source:src.name,ok:false,error:e&&e.message?e.message:String(e)})}finally{if(tab&&tab.id)chrome.tabs.remove(tab.id).catch(()=>{})}}
- const total=summary.reduce((n,x)=>n+(x.count||0),0);await chrome.storage.local.set({lastStatus:"Сбор завершён: "+total+" тендеров"});return{ok:true,summary}
+ for(const src of SOURCES){
+  let tab;
+  try{
+   tab=await chrome.tabs.create({url:src.url,active:false});
+   await wait(tab.id,src.waitMs||2500);
+   const result=src.name==="Bidzaar"?await collectBidzaar(tab.id):await collectTab(tab.id);
+   summary.push({source:src.name,...result})
+  }catch(e){summary.push({source:src.name,ok:false,error:e&&e.message?e.message:String(e)})}
+  finally{if(tab&&tab.id)chrome.tabs.remove(tab.id).catch(()=>{})}
+ }
+ const total=summary.reduce((n,x)=>n+(x.count||0),0);
+ await chrome.storage.local.set({lastStatus:"Сбор завершён: "+total+" результатов до удаления дублей"});
+ return{ok:true,summary}
 }
