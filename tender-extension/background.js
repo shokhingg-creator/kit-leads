@@ -11,12 +11,12 @@ chrome.runtime.onMessage.addListener((m,s,r)=>{
  if(m.type==="GET_STATE"){chrome.storage.local.get(["kitTenders","lastRun","lastStatus"]).then(r);return true}
  if(m.type==="CLEAR"){chrome.storage.local.set({kitTenders:[],lastStatus:"База очищена"}).then(()=>r({ok:true}));return true}
 });
-async function code(){return(await fetch(chrome.runtime.getURL("extractor.js"))).text()}
 async function collectTab(tabId){
  try{
   const tab=await chrome.tabs.get(tabId);
   if(!/(zakupki\.gov\.ru|roseltorg\.ru|b2b-center\.ru|fabrikant\.ru)/i.test(tab.url||""))return{ok:false,error:"Откройте страницу со списком закупок поддерживаемой площадки"};
-  const injected=await chrome.scripting.executeScript({target:{tabId},func:c=>eval(c),args:[await code()]});
+  await chrome.scripting.executeScript({target:{tabId},files:["extractor.js"]});
+  const injected=await chrome.scripting.executeScript({target:{tabId},func:()=>{const raw=document.documentElement.dataset.kitTenderResult;return raw?JSON.parse(raw):null}});
   const result=injected&&injected[0]&&injected[0].result;
   if(!result||!Array.isArray(result.items))return{ok:false,error:"Не получен ответ от страницы. Обновите страницу, дождитесь списка и повторите сбор"};
   await merge(result.items);
