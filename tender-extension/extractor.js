@@ -36,7 +36,38 @@
   const org=links.find(x=>x!==tenderLink&&/(ООО|АО|ПАО|ИП|ЗАО|ОАО|ФГУП)/i.test(clean(x.textContent)));
   items.push({id:source+"-"+btoa(unescape(encodeURIComponent(href))).slice(-24),title,customer:clean(org&&org.textContent),inn:im?im[1]:"",region:"Не указан",price:pm?Number(pm[1].replace(/\s|\u00a0/g,"")):0,deadline:dm?dm[1]+(dm[2]?" "+dm[2]:""):"",score:/(^|\s)Перевозки(\s|$)/i.test(text)?85:70,source,url:href,collectedAt:new Date().toISOString()});
  }
- if(source==="B2B-Center"){
+ if(source==="Bidzaar"){
+  const titleRe=/^\d{2,}-\d+\s*[·•]\s*(.+)/;
+  const nodes=[...document.querySelectorAll("a,div,span,h1,h2,h3,h4")].filter(el=>{
+   const value=clean(el.textContent);
+   if(!titleRe.test(value))return false;
+   return ![...el.children].some(ch=>titleRe.test(clean(ch.textContent)))
+  });
+  for(const node of nodes){
+   let box=node;
+   for(let i=0;i<7&&box.parentElement;i++){
+    const parent=box.parentElement,parentText=clean(parent.innerText);
+    box=parent;
+    if(/Прием предложений до/i.test(parentText)&&parentText.length<1500)break
+   }
+   const text=clean(box.innerText),match=clean(node.textContent).match(titleRe);
+   const title=match?match[1]:clean(node.textContent);
+   if(!good.test(title+" "+text)||bad.test(title+" "+text))continue;
+   const number=(clean(node.textContent).match(/^(\d{2,}-\d+)/)||[])[1]||"";
+   const deadlineMatch=text.match(/Прием предложений до\s*(\d{2}\.\d{2}\.\d{4})\s*[·•]\s*(\d{1,2}:\d{2})/i);
+   const publishedMatch=text.match(/Прием предложений с\s*(\d{2}\.\d{2}\.\d{4})/i);
+   const anchor=node.closest("a[href]")||box.querySelector("a[href]");
+   const href=anchor?new URL(anchor.href,location.href).href:location.href+"#request-"+number;
+   const signature=source+"|"+number+"|"+title.toLowerCase();
+   if(seen.has(signature))continue;seen.add(signature);
+   items.push({id:source+"-"+number,title,customer:"",inn:"",region:"Не указан",price:0,
+    deadline:deadlineMatch?deadlineMatch[1]+" "+deadlineMatch[2]:"",
+    publicationDate:publishedMatch?publishedMatch[1]:"",
+    score:/грузоперевоз|перевозк.{0,25}груз|транспортно.?экспедицион/i.test(title)?85:70,
+    source,url:href,collectedAt:new Date().toISOString()});
+   if(items.length>=200)break
+  }
+ }else if(source==="B2B-Center"){
   const links=[...document.querySelectorAll('a[href*="/market/view"],a[href*="market/view"],a[href*="trade_view"]')];
   for(const a of links){let box=a.closest("tr");if(!box){box=a;for(let i=0;i<8&&box.parentElement;i++){box=box.parentElement;if(clean(box.innerText).length>120&&/(Опубликовано|Актуально до)/i.test(clean(box.innerText)))break}}add(a,box);if(items.length>=200)break}
  }else{
