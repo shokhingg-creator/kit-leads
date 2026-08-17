@@ -27,7 +27,7 @@ async function collectTab(tabId){
 }
 async function merge(items){
  const s=await chrome.storage.local.get(["kitTenders"]);const map=new Map((s.kitTenders||[]).map(x=>[(x.source||"")+"|"+(x.url||x.id),x]));
- items.forEach(x=>map.set((x.source||"")+"|"+(x.url||x.id),x));
+ items.forEach(x=>{const key=(x.source||"")+"|"+(x.url||x.id),old=map.get(key)||{};map.set(key,{...old,...x,workStatus:old.workStatus||x.workStatus,decisionDate:old.decisionDate||x.decisionDate})});
  await chrome.storage.local.set({kitTenders:[...map.values()].slice(-3000),lastRun:new Date().toISOString()});
 }
 function wait(tabId){return new Promise(resolve=>{const timer=setTimeout(()=>{chrome.tabs.onUpdated.removeListener(fn);resolve()},25000);const fn=(id,info)=>{if(id===tabId&&info.status==="complete"){clearTimeout(timer);chrome.tabs.onUpdated.removeListener(fn);setTimeout(resolve,2500)}};chrome.tabs.onUpdated.addListener(fn)})}
