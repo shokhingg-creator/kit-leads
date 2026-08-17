@@ -1,7 +1,21 @@
 (() => {
  const clean=v=>(v||"").replace(/\s+/g," ").trim();
  const host=location.hostname.replace(/^www\./,"");
- const source=host.includes("zakupki.gov")?"ЕИС":host.includes("roseltorg")?"Росэлторг":host.includes("b2b-center")?"B2B-Center":host.includes("fabrikant")?"Фабрикант":host;
+ const source=host.includes("zakupki.gov")?"ЕИС":
+  host.includes("roseltorg")?"Росэлторг":
+  host.includes("b2b-center")?"B2B-Center":
+  host.includes("fabrikant")?"Фабрикант":
+  host.includes("tektorg")?"ТЭК-Торг":
+  host.includes("rts-tender")?"РТС-тендер":
+  host.includes("sberbank-ast")?"Сбер А":
+  host.includes("etpgpb")?"ЭТП Газпромбанка":
+  host.includes("zakazrf")?"Заказ РФ":
+  host.includes("etp-ets")?"НЭП":
+  host.includes("lot-online")?"Российский аукционный дом":
+  host.includes("otc.ru")?"OTC":
+  host.includes("bidzaar")?"Bidzaar":
+  host.includes("etprf")?"ЭТПРФ":
+  host.includes("ati.su")?"АТИ":host;
  const good=/(грузоперевоз|перевозк.{0,25}груз|транспортно.?экспедицион|экспедирован|\bftl\b|\bltl\b|логистическ|курьерск.{0,20}достав|складск.{0,20}услуг|ответственн.{0,8}хранен)/i;
  const bad=/(пассажир|автобус|такси|спецтехник|аренда автомобил|покупка автомобил|топлив|вывоз тко|твердых коммунальн|медицинск.{0,10}отход|эвакуатор)/i;
  const dateRe=/(?:актуально до|до|окончание|заявок)[^\d]{0,30}(\d{2}[.\/-]\d{2}[.\/-]\d{4})(?:\s+(\d{1,2}:\d{2}))?/i;
