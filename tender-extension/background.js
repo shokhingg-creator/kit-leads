@@ -17,7 +17,7 @@ async function collectTab(tabId){
  try{
   const tab=await chrome.tabs.get(tabId);
   if(!/(zakupki\.gov\.ru|roseltorg\.ru|b2b-center\.ru|fabrikant\.ru)/i.test(tab.url||""))return{ok:false,error:"Откройте страницу со списком закупок поддерживаемой площадки"};
-  await chrome.scripting.executeScript({target:{tabId},files:["extractor.js"]});
+  await chrome.scripting.executeScript({target:{tabId},files:["extractor.js","publication-date.js"]});
   const injected=await chrome.scripting.executeScript({target:{tabId},func:()=>{const raw=document.documentElement.dataset.kitTenderResult;return raw?JSON.parse(raw):null}});
   const result=injected&&injected[0]&&injected[0].result;
   if(!result||!Array.isArray(result.items))return{ok:false,error:"Не получен ответ от страницы. Обновите страницу, дождитесь списка и повторите сбор"};
