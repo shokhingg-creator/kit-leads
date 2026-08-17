@@ -19,5 +19,6 @@ function render(){
 }
 ["q","source","score","workStatus"].forEach(id=>document.getElementById(id).addEventListener("input",render));
 document.getElementById("collect").onclick=()=>{const b=document.getElementById("collect");b.textContent="Собираю…";chrome.runtime.sendMessage({type:"COLLECT_ALL"},()=>{b.textContent="Обновить список";load()})};
+document.getElementById("jsonExport").onclick=()=>{const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify({exportedAt:new Date().toISOString(),tenders:all},null,2)],{type:"application/json"}));a.download="KIT_Tenders_For_Site.json";a.click()};
 document.getElementById("export").onclick=()=>{const rows=[["Тендер","Заказчик","ИНН","Источник","НМЦК","Дата начала","Дедлайн","Рейтинг","Решение","Дата решения","Ссылка"],...view.map(x=>[x.title,x.customer,x.inn,x.source,x.price,x.publicationDate,x.deadline,x.score,labels[x.workStatus||"new"],x.decisionDate,x.url])];const csv=rows.map(r=>r.map(x=>'"'+String(x||"").replaceAll('"','""')+'"').join(";")).join("\n");const a=document.createElement("a");a.href=URL.createObjectURL(new Blob(["\ufeff"+csv],{type:"text/csv"}));a.download="Тендеры_КИТ_со_статусами.csv";a.click()};
 load();
