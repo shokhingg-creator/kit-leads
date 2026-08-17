@@ -56,7 +56,7 @@ function tenderKey(x){
  const price=Number(x.price||0);
  const deadline=String(x.deadline||"").replace(/\\D/g,"").slice(0,8);
  const customer=(x.inn||x.customer||"").toLowerCase().replace(/[^а-яёa-z0-9]+/gi," ").trim();
- return "text|"+title+"|"+(price||"")+"|"+deadline+"|"+(customer||"")
+ return "text|"+title+"|"+(price||"")+"|"+deadline
 }
 function combineTender(old,x){
  const oldStatus=old.workStatus&&old.workStatus!=="new"?old.workStatus:"";
