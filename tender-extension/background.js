@@ -25,9 +25,35 @@ async function collectTab(tabId){
   return{ok:true,count:result.items.length,source:result.source}
  }catch(e){return{ok:false,error:e&&e.message?e.message:String(e)}}
 }
+function tenderKey(x){
+ const source=(x.source||"").toLowerCase();
+ const rawUrl=x.url||"";
+ try{
+  const u=new URL(rawUrl);
+  const idNames=["id","tender_id","procedure_id","trade_id","noticeInfoId","regNumber","purchaseNumber"];
+  for(const name of idNames){const value=u.searchParams.get(name);if(value)return source+"|id|"+value.toLowerCase()}
+  const pathId=u.pathname.match(/(?:^|\/)(\d{6,})(?:\/|$)/);
+  if(pathId)return source+"|id|"+pathId[1];
+  u.hash="";
+  [...u.searchParams.keys()].forEach(k=>{if(/^utm_|^(searching|date|trade|company_type|price_currency|f_keyword)$/i.test(k))u.searchParams.delete(k)});
+  const canonical=u.origin+u.pathname+(u.searchParams.toString()?"?"+u.searchParams.toString():"");
+  if(canonical!==u.origin+"/")return source+"|url|"+canonical.toLowerCase()
+ }catch{}
+ const number=((x.title||"")+" "+rawUrl).match(/(?:№|номер|procedure|tender|trade)[^\d]{0,12}(\d{6,})/i);
+ if(number)return source+"|number|"+number[1];
+ const title=(x.title||"").toLowerCase().replace(/[^а-яёa-z0-9]+/gi," ").trim().slice(0,180);
+ const customer=(x.inn||x.customer||"").toLowerCase().replace(/\s+/g," ").trim();
+ return source+"|text|"+title+"|"+customer
+}
+function combineTender(old,x){
+ const oldStatus=old.workStatus&&old.workStatus!=="new"?old.workStatus:"";
+ return {...old,...x,workStatus:oldStatus||x.workStatus||old.workStatus||"new",decisionDate:old.decisionDate||x.decisionDate||"",publicationDate:x.publicationDate||old.publicationDate||""}
+}
 async function merge(items){
- const s=await chrome.storage.local.get(["kitTenders"]);const map=new Map((s.kitTenders||[]).map(x=>[(x.source||"")+"|"+(x.url||x.id),x]));
- items.forEach(x=>{const key=(x.source||"")+"|"+(x.url||x.id),old=map.get(key)||{};map.set(key,{...old,...x,workStatus:old.workStatus||x.workStatus,decisionDate:old.decisionDate||x.decisionDate})});
+ const s=await chrome.storage.local.get(["kitTenders"]);
+ const map=new Map();
+ for(const x of (s.kitTenders||[])){const key=tenderKey(x);map.set(key,map.has(key)?combineTender(map.get(key),x):x)}
+ for(const x of items){const key=tenderKey(x);map.set(key,map.has(key)?combineTender(map.get(key),x):x)}
  await chrome.storage.local.set({kitTenders:[...map.values()].slice(-3000),lastRun:new Date().toISOString()});
 }
 function wait(tabId){return new Promise(resolve=>{const timer=setTimeout(()=>{chrome.tabs.onUpdated.removeListener(fn);resolve()},25000);const fn=(id,info)=>{if(id===tabId&&info.status==="complete"){clearTimeout(timer);chrome.tabs.onUpdated.removeListener(fn);setTimeout(resolve,2500)}};chrome.tabs.onUpdated.addListener(fn)})}
