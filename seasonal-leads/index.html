@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>КИТ — Поиск клиентов по России</title>
+  <link rel="stylesheet" href="./style.css">
+  <script type="module" src="./app.js"></script>
+</head>
+<body>
+  <header class="masthead"><div class="wrap brand"><a class="mark" href="https://shokhingg-creator.github.io/kit-leads/" aria-label="КИТ Leads">КИТ</a><span>Активные продажи</span></div></header>
+  <main class="wrap">
+    <div class="intro">
+      <h1>Поиск клиентов по России</h1>
+      <p>Подберите производителей и оптовиков с межгородскими отгрузками.</p>
+    </div>
+    <section class="panel" aria-labelledby="search-title">
+      <h2 id="search-title">Параметры поиска</h2>
+      <form id="search-form" class="filters">
+        <label>Кластер<select id="cluster"></select></label>
+        <label>Город поиска<input id="city" list="cities" maxlength="80" required><datalist id="cities"></datalist></label>
+        <label>Груз<select id="category"></select></label>
+        <button type="submit" id="run" disabled>Найти компании</button>
+      </form>
+      <p id="mode" class="muted">Проверяем доступность автопоиска…</p>
+      <div id="manual-links" class="actions" aria-label="Ручной поиск"></div>
+      <p id="notice" class="notice" aria-live="polite"></p>
+    </section>
+
+    <section class="registry" aria-labelledby="registry-title">
+      <div class="registry-head">
+        <div><h2 id="registry-title">Кандидаты <span id="count" class="count">0</span></h2><p class="muted">Записи сохраняются в этом браузере. Город поиска указан для отбора, склад и маршрут уточняются у компании.</p></div>
+        <div class="actions"><button type="button" class="secondary" id="add">Добавить вручную</button><button type="button" id="export" disabled>Выгрузить CSV</button></div>
+      </div>
+      <form id="manual" class="manual panel" hidden>
+        <label>Компания<input name="company" required maxlength="160"></label>
+        <label>Ссылка на источник<input type="url" name="source" required maxlength="1200"></label>
+        <label>ИНН<input name="inn" inputmode="numeric" maxlength="12"></label>
+        <label>Корпоративный email<input type="email" name="contact" maxlength="180"></label>
+        <label class="wide">Что на странице сказано об отгрузках<input name="evidence" required maxlength="450"></label>
+        <button type="submit">Сохранить</button>
+        <button type="button" class="secondary" id="cancel-add">Отмена</button>
+        <p id="manual-notice" class="notice wide" aria-live="polite"></p>
+      </form>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Компания и контакт</th><th>Подборка</th><th>Что известно об отгрузках</th><th>Статус CoWork</th></tr></thead>
+          <tbody id="leads"></tbody>
+        </table>
+        <p id="empty">Запустите поиск или добавьте компанию по ссылке.</p>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
